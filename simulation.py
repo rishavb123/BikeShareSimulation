@@ -97,6 +97,7 @@ class Simulation:
         }
         self.stats["total_riders"] = 0
         self.stats["invocations"] = {}
+        self.stats["temp"] = {"total_wait_time": 0}
 
         def make_count_template():
             temp = {
@@ -188,21 +189,22 @@ class Simulation:
                 self.stats["total_riders"] += 1
                 i = np.random.choice(self.m, p=self.p)
                 riders_waiting[i] += 1
-                schedule(event__wait_for_bike, t, i=i, arrived=True)
+                schedule(event__wait_for_bike, t, i=i, _wait_time=0, arrived=True)
                 return i
             return "Limited"
 
-        def event__wait_for_bike(t, i):
+        def event__wait_for_bike(t, i, _wait_time):
             if bikes_stations[i] > 0:
                 schedule(event__take_bike, t, important=True, i=i)
+                self.stats["temp"]["total_wait_time"] += _wait_time
                 return "Take"
             else:
-                schedule(event__wait_for_bike, t + 1, i=i)
+                schedule(event__wait_for_bike, t + 1, i=i, _wait_time=_wait_time + 1)
                 return "Wait"
 
         def event__take_bike(t, i):
             if bikes_stations[i] <= 0:
-                schedule(event__wait_for_bike, t, i=i)
+                schedule(event__wait_for_bike, t, i=i, _wait_time=0)
             bikes_stations[i] -= 1
             s = np.random.normal(loc=self.mu, scale=self.sigma)
             ride_time = np.round(np.exp(s))
@@ -286,16 +288,24 @@ class Simulation:
                 ]["Take"]
                 / self.stats["total_riders"]
             },
-            "average_waiting_time": {"estimate": 0},
+            "average_waiting_time": {
+                "estimate": self.stats["temp"]["total_wait_time"]
+                / self.stats["invocations"]["event__wait_for_bike"]["ret_vals"]["Take"]
+            },
         }
 
+        # del temp stats
+        del self.stats["temp"]
+
         # save stats
+        self.stats = json.loads(json.dumps(self.stats))
+
         if self.save_results is not None:
             with open(self.save_results, "w") as f:
                 if self.save_results.split(".")[-1] == "json":
-                    json.dump(self.stats, f, indent=4)
+                    json.dump(self.stats, f, indent=4, sort_keys=True)
                 else:
-                    yaml.dump(self.stats, f, indent=4)
+                    yaml.dump(self.stats, f, indent=4, sort_keys=True)
 
         # return
         self.ran = True

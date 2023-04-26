@@ -78,7 +78,7 @@ def get_args(
             ext = cfg_file_name.split(".")[-1]
             if ext not in supported_exts:
                 raise NotImplementedError(f"Extension {ext} is not supported")
-            configs_dict = supported_exts[ext](f)
+            configs_dict = supported_exts_loaders[ext](f)
             args_dict.update(configs_dict)
 
     parser = __clear_defaults(parser)

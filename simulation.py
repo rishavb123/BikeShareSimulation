@@ -167,6 +167,7 @@ class Simulation:
         def event__return_bike(i):
             j = np.random.choice(self.m, p=self.q[i])
             bikes_stations[j] += 1
+            return j
 
         # define simulation event caller
         def run_events(t):

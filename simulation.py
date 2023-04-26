@@ -47,6 +47,8 @@ class Simulation:
                 name, prob = row
                 stations.append(name)
                 p.append(float(prob))
+            stations.append("dump")
+            p.append(0)
         return np.array(stations), np.array(p)
 
     def build_stations_mapping(self, stations):
@@ -62,10 +64,11 @@ class Simulation:
             _ = next(reader)
             for row in reader:
                 start, end, count, _, _ = row
-                i = self.stations_mapping[start]
-                j = self.stations_mapping[end]
+                i = self.stations_mapping.get(start, self.stations_mapping["dump"])
+                j = self.stations_mapping.get(end, self.stations_mapping["dump"])
                 q[i, j] += int(count)
         q_sum = np.sum(q, axis=1).reshape(-1, 1)
+        q_sum[q_sum == 0] = 1
         q = q / q_sum
         return q
 

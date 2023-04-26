@@ -8,7 +8,7 @@ BIKES_PER_STATION = 10
 START_STATION_PROBS_FILE = "./data/start_station_probs.csv"
 TRIP_STATS_FILE = "./data/trip_stats.csv"
 
-END_TIME = 24 * 60
+END_TIME = 1440
 
 
 def make_parser():
@@ -59,3 +59,5 @@ def make_parser():
         type=int,
         help="The end time of the simulation (starting from t=0) in minutes.",
     )
+
+    return parser

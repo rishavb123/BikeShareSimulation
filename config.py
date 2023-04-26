@@ -30,7 +30,7 @@ def make_parser():
     )
 
     parser.add_argument(
-        "--bikes-per-stations",
+        "--bikes-per-station",
         "-b",
         default=BIKES_PER_STATION,
         type=int,

@@ -145,7 +145,7 @@ class Simulation:
                 i = np.random.choice(self.m, p=self.p)
                 riders_waiting[i] += 1
                 schedule(event__wait_for_bike, t, i=i)
-                return "Spawned"
+                return i
             return "Limited"
 
         def event__wait_for_bike(t, i):

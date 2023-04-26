@@ -84,7 +84,10 @@ class Simulation:
 
         # setup time bins
         bin_width = self.end_time / self.num_time_bins
-        bin_names = [f"{b * bin_width:0.1f} -> {(b + 1) * bin_width:0.1f}" for b in range(self.num_time_bins)]
+        bin_names = [
+            f"{b * bin_width:0.1f} -> {(b + 1) * bin_width:0.1f}"
+            for b in range(self.num_time_bins)
+        ]
 
         # setup stats
         self.stats["stations_mapping"] = self.stations_mapping
@@ -102,11 +105,7 @@ class Simulation:
                 "args": {},
                 "full_args": {},
                 "time_bins": {n: 0 for n in bin_names},
-                "overtime": {
-                    "total": 0,
-                    "args": {},
-                    "full_args": {}
-                }
+                "overtime": {"total": 0, "args": {}, "full_args": {}},
             }
             return temp
 
@@ -118,7 +117,7 @@ class Simulation:
         events = [deque() for _ in range(self.end_time)]
 
         def count_invocation(invoc_dict, kwargs):
-            kwargs = {**kwargs}
+            kwargs = {k: v for k, v in kwargs.items() if not k.startswith("_")}
             del kwargs["t"]
 
             # Count invocations
@@ -136,7 +135,9 @@ class Simulation:
                 string_kwargs += f", {k}={v}"
             if len(string_kwargs) > 0:
                 string_kwargs = string_kwargs[2:]
-                invoc_dict["full_args"][string_kwargs] = invoc_dict["full_args"].get(string_kwargs, 0) + 1
+                invoc_dict["full_args"][string_kwargs] = (
+                    invoc_dict["full_args"].get(string_kwargs, 0) + 1
+                )
 
         def event_wrapper(f, **kwargs):
             func_kwargs = {
@@ -148,9 +149,7 @@ class Simulation:
                     self.stats["invocations"][f.__name__] = make_count_template()
                 ret = f(**func_kwargs)
 
-                count_invocation(
-                    self.stats["invocations"][f.__name__], kwargs
-                )
+                count_invocation(self.stats["invocations"][f.__name__], kwargs)
 
                 # Count return values
                 if ret is not None:
@@ -160,7 +159,9 @@ class Simulation:
                     )
 
                 # Count time values
-                self.stats["invocations"][f.__name__]["time_bins"][bin_names[int(t // bin_width)]] += 1
+                self.stats["invocations"][f.__name__]["time_bins"][
+                    bin_names[int(t // bin_width)]
+                ] += 1
 
             return wrapper
 
@@ -280,11 +281,12 @@ class Simulation:
         # add reported values into stats
         self.stats["report"] = {
             "successful_rental_ratio": {
-                "estimate": self.stats["invocations"]["event__wait_for_bike"]["ret_vals"]["Take"] / self.stats["total_riders"]
+                "estimate": self.stats["invocations"]["event__wait_for_bike"][
+                    "ret_vals"
+                ]["Take"]
+                / self.stats["total_riders"]
             },
-            "average_waiting_time": {
-                "estimate": 0
-            }
+            "average_waiting_time": {"estimate": 0},
         }
 
         # save stats

@@ -88,10 +88,17 @@ class Simulation:
             }
 
             def wrapper():
-                self.stats["invocations"][f.__name__] = (
-                    self.stats["invocations"].get(f.__name__, 0) + 1
-                )
-                f(**func_kwargs)
+                if f.__name__ not in self.stats["invocations"]:
+                    self.stats["invocations"][f.__name__] = {
+                        "success": 0,
+                        "failure": 0,
+                        "total": 0
+                    }
+                self.stats["invocations"][f.__name__]["total"] += 1
+                if f(**func_kwargs):
+                    self.stats["invocations"][f.__name__]["success"] += 1
+                else:
+                    self.stats["invocations"][f.__name__]["failure"] += 1
 
             return wrapper
 
@@ -113,22 +120,31 @@ class Simulation:
                 i = np.random.choice(self.m, p=self.p)
                 riders_waiting[i] += 1
                 schedule(event__wait_for_bike, t, i=i)
+                return True
+            return False
 
         def event__wait_for_bike(t, i):
             if bikes_stations[i] > 0:
                 schedule(event__take_bike, t, important=True, i=i)
+                return True
             else:
                 schedule(event__wait_for_bike, t + 1, i=i)
+                return False
 
         def event__take_bike(t, i):
+            if bikes_stations[i] <= 0:
+                schedule(event__wait_for_bike, t, i=i)
+                return False
             bikes_stations[i] -= 1
             s = np.random.normal(loc=self.mu, scale=self.sigma)
             ride_time = np.round(np.exp(s))
             schedule(event__return_bike, t + int(ride_time), important=True, i=i)
+            return True
 
         def event__return_bike(i):
             j = np.random.choice(self.m, p=self.q[i])
             bikes_stations[j] += 1
+            return True
 
         # define simulation event caller
         def run_events(t):

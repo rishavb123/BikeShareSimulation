@@ -96,6 +96,18 @@ class Simulation:
         # define event system
         events = [deque() for _ in range(self.end_time)]
 
+        def count_invocation_and_args(invoc_dict, kwargs):
+            # Count invocations
+            invoc_dict["total"] += 1
+
+            # Count arg values
+            for k, v in kwargs.items():
+                if k == "t":
+                    continue
+                if k not in invoc_dict["args"]:
+                    invoc_dict["args"][k] = {}
+                invoc_dict["args"][k][v] = invoc_dict["args"][k].get(v, 0) + 1
+
         def event_wrapper(f, **kwargs):
             func_kwargs = {
                 key: kwargs[key] for key in kwargs if key in f.__code__.co_varnames
@@ -107,21 +119,13 @@ class Simulation:
                         "total": 0,
                         "ret_vals": {},
                         "args": {},
+                        "overtime": {"total": 0, "args": {}},
                     }
                 ret = f(**func_kwargs)
 
-                # Count invocations
-                self.stats["invocations"][f.__name__]["total"] += 1
-
-                # Count arg values
-                for k, v in func_kwargs.items():
-                    if k == "t":
-                        continue
-                    if k not in self.stats["invocations"][f.__name__]["args"]:
-                        self.stats["invocations"][f.__name__]["args"][k] = {}
-                    self.stats["invocations"][f.__name__]["args"][k][v] = (
-                        self.stats["invocations"][f.__name__]["args"][k].get(v, 0) + 1
-                    )
+                count_invocation_and_args(
+                    self.stats["invocations"][f.__name__], func_kwargs
+                )
 
                 # Count return values
                 if ret is not None:
@@ -133,9 +137,24 @@ class Simulation:
             return wrapper
 
         def schedule(event, t, num_times=1, important=False, **kwargs):
-            if t >= self.end_time:
-                return
             kwargs["t"] = t
+            if t >= self.end_time:
+                if event.__name__ not in self.stats["invocations"]:
+                    self.stats["invocations"][event.__name__] = {
+                        "total": 0,
+                        "ret_vals": {},
+                        "args": {},
+                        "overtime": {"total": 0, "args": {}},
+                    }
+                func_kwargs = {
+                    key: kwargs[key]
+                    for key in kwargs
+                    if key in event.__code__.co_varnames
+                }
+                count_invocation_and_args(
+                    self.stats["invocations"][event.__name__]["overtime"], func_kwargs
+                )
+                return
             argless_event = event_wrapper(event, **kwargs)
             for _ in range(num_times):
                 if important:
@@ -205,7 +224,31 @@ class Simulation:
                 "simulated": self.stats["invocations"]["event__spawn_rider"][
                     "ret_vals"
                 ],
-            }
+            },
+            "return_bike": {
+                "expected": {
+                    j: np.sum(
+                        [
+                            self.q[i, j]
+                            * (
+                                self.stats["invocations"]["event__take_bike"]["args"][
+                                    "i"
+                                ].get(i, 0)
+                                - self.stats["invocations"]["event__return_bike"][
+                                    "overtime"
+                                ]["args"]
+                                .get("i", {})
+                                .get(i, 0)
+                            )
+                            for i in range(self.m)
+                        ]
+                    )
+                    for j in range(self.m)
+                },
+                "simulated": self.stats["invocations"]["event__return_bike"][
+                    "ret_vals"
+                ],
+            },
         }
 
         for validation_check in self.stats["validation"]:

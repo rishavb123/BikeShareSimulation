@@ -8,15 +8,20 @@ class Simulation:
         num_riders=3500,
         mean_spawn_rate=2.38,
         bikes_per_station=10,
+        ride_time_mean=2.78,
+        ride_time_std=0.619,
         start_station_probs_file="./data/start_station_probs.csv",
         trip_stats_file="./data/trip_stats.csv",
         end_time=1440,
-        **kwargs,
+        **_,
     ) -> None:
         self.n = num_riders
         self.lambda_ = mean_spawn_rate
 
         self.k = bikes_per_station
+
+        self.mu = ride_time_mean
+        self.sigma = ride_time_std
 
         self.stations, self.p = self.load_start_probabilities(
             start_station_probs_file=start_station_probs_file

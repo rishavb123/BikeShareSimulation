@@ -5,6 +5,9 @@ MEAN_SPAWN_RATE = 2.38
 
 BIKES_PER_STATION = 10
 
+RIDE_TIME_MEAN = 2.78
+RIDE_TIME_STD = 0.619
+
 START_STATION_PROBS_FILE = "./data/start_station_probs.csv"
 TRIP_STATS_FILE = "./data/trip_stats.csv"
 
@@ -35,6 +38,21 @@ def make_parser():
         default=BIKES_PER_STATION,
         type=int,
         help="The number of bikes per station. Specify -1 for infinite bikes per station.",
+    )
+
+    parser.add_argument(
+        "--ride-time-mean",
+        "-rm",
+        default=RIDE_TIME_MEAN,
+        type=float,
+        help="The log mean ride time, which is log normally distributed with the mean specified in this parameter."
+    )
+    parser.add_argument(
+        "--ride-time-std",
+        "-rs",
+        default=RIDE_TIME_STD,
+        type=float,
+        help="The log std ride time, which is log normally distributed with standard deviation specified in this parameter."
     )
 
     parser.add_argument(

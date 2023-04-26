@@ -1,10 +1,10 @@
 start,end,count,mean,std
 Station A,Station A,2,0,0
 Station A,Station B,4,0,0
-Station A,Station C,1,0,0
+Station A,Station C,2,0,0
 Station B,Station A,3,0,0
 Station B,Station B,5,0,0
-Station B,Station C,12,0,0
+Station B,Station C,2,0,0
 Station C,Station A,1,0,0
 Station C,Station B,2,0,0
-Station C,Station C,4,0,0
+Station C,Station C,7,0,0

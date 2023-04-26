@@ -298,14 +298,12 @@ class Simulation:
         del self.stats["temp"]
 
         # save stats
-        self.stats = json.loads(json.dumps(self.stats))
-
         if self.save_results is not None:
             with open(self.save_results, "w") as f:
                 if self.save_results.split(".")[-1] == "json":
-                    json.dump(self.stats, f, indent=4, sort_keys=True)
+                    json.dump(self.stats, f, indent=4)
                 else:
-                    yaml.dump(self.stats, f, indent=4, sort_keys=True)
+                    yaml.dump(self.stats, f, indent=4)
 
         # return
         self.ran = True

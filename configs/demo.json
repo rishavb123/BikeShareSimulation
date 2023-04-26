@@ -1,6 +1,6 @@
 {
-    "num_riders": 100,
-    "mean_spawn_rate": 1.25,
+    "num_riders": 1000,
+    "mean_spawn_rate": 15,
     "bikes_per_station": 5,
     "ride_time_mean": 2,
     "ride_time_std": 0.1,

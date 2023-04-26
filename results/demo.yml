@@ -1,0 +1,18 @@
+invocations:
+    event__return_bike:
+        failure: 0
+        success: 72
+        total: 72
+    event__spawn_rider:
+        failure: 36
+        success: 100
+        total: 136
+    event__take_bike:
+        failure: 0
+        success: 72
+        total: 72
+    event__wait_for_bike:
+        failure: 1568
+        success: 72
+        total: 1640
+total_riders: 100

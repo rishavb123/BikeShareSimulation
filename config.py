@@ -13,6 +13,8 @@ TRIP_STATS_FILE = "./data/trip_stats.csv"
 
 END_TIME = 1440
 
+SAVE_RESULTS = None
+
 
 def make_parser():
     parser = argparse.ArgumentParser(description="Run a bike share simulation")
@@ -45,14 +47,14 @@ def make_parser():
         "-rm",
         default=RIDE_TIME_MEAN,
         type=float,
-        help="The log mean ride time, which is log normally distributed with the mean specified in this parameter."
+        help="The log mean ride time, which is log normally distributed with the mean specified in this parameter.",
     )
     parser.add_argument(
         "--ride-time-std",
         "-rs",
         default=RIDE_TIME_STD,
         type=float,
-        help="The log std ride time, which is log normally distributed with standard deviation specified in this parameter."
+        help="The log std ride time, which is log normally distributed with standard deviation specified in this parameter.",
     )
 
     parser.add_argument(
@@ -76,6 +78,14 @@ def make_parser():
         default=END_TIME,
         type=int,
         help="The end time of the simulation (starting from t=0) in minutes.",
+    )
+
+    parser.add_argument(
+        "--save-results",
+        "-sr",
+        default=SAVE_RESULTS,
+        type=str,
+        help="The file in which to save the results of the simulation to.",
     )
 
     return parser

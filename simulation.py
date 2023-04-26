@@ -1,6 +1,8 @@
 from collections import deque
 import csv
 import numpy as np
+import json
+import yaml
 
 
 class Simulation:
@@ -14,7 +16,7 @@ class Simulation:
         start_station_probs_file="./data/start_station_probs.csv",
         trip_stats_file="./data/trip_stats.csv",
         end_time=1440,
-        **_,
+        save_results=None,
     ) -> None:
         self.n = num_riders
         self.lambda_ = mean_spawn_rate
@@ -33,6 +35,8 @@ class Simulation:
         self.q = self.load_trip_stats(trip_stats_file=trip_stats_file)
 
         self.end_time = end_time
+
+        self.save_results = save_results
 
         self.ran = False
         self.stats = {}
@@ -166,5 +170,12 @@ class Simulation:
             run_events(t)
 
         self.ran = True
+
+        if self.save_results is not None:
+            with open(self.save_results, "w") as f:
+                if self.save_results.split(".")[-1] == "json":
+                    json.dump(self.stats, f, indent=4)
+                else:
+                    yaml.dump(self.stats, f, indent=4)
 
         return self.stats

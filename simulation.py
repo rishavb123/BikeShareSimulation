@@ -80,9 +80,16 @@ class Simulation:
         if self.ran:
             return
 
-        self.stats["invocations"] = {}
+        # setup stats
+        self.stats["stations_mapping"] = self.stations_mapping
+        self.stats["start_probabilities"] = {i: self.p[i] for i in range(self.m)}
+        self.stats["transition_probabilities"] = {
+            f"{i} -> {j}": self.q[i, j] for i in range(self.m) for j in range(self.m)
+        }
         self.stats["total_riders"] = 0
+        self.stats["invocations"] = {}
 
+        # create global variables
         bikes_stations = [self.k for _ in range(self.m)]
         riders_waiting = [0 for _ in range(self.m)]
 
@@ -119,9 +126,7 @@ class Simulation:
                 # Count return values
                 if ret is not None:
                     self.stats["invocations"][f.__name__]["ret_vals"][ret] = (
-                        self.stats["invocations"][f.__name__]["ret_vals"].get(
-                            ret, 0
-                        )
+                        self.stats["invocations"][f.__name__]["ret_vals"].get(ret, 0)
                         + 1
                     )
 
@@ -184,12 +189,33 @@ class Simulation:
             for t in range(self.end_time)
         ]
 
-        # Run simulation loop
+        # run simulation loop
         for t in range(self.end_time):
             run_events(t)
 
-        self.ran = True
+        # simulation validation checks
+        self.stats["validation"] = {
+            "spawn_stations": {
+                "expected": {
+                    **{
+                        i: self.p[i] * self.stats["total_riders"] for i in range(self.m)
+                    },
+                    "Limited": max(0, self.lambda_ * self.end_time - self.n),
+                },
+                "simulated": self.stats["invocations"]["event__spawn_rider"][
+                    "ret_vals"
+                ],
+            }
+        }
 
+        for validation_check in self.stats["validation"]:
+            self.stats["validation"][validation_check]["error"] = {
+                k: self.stats["validation"][validation_check]["simulated"].get(k, 0)
+                - self.stats["validation"][validation_check]["expected"][k]
+                for k in self.stats["validation"][validation_check]["expected"]
+            }
+
+        # save stats
         if self.save_results is not None:
             with open(self.save_results, "w") as f:
                 if self.save_results.split(".")[-1] == "json":
@@ -197,4 +223,6 @@ class Simulation:
                 else:
                     yaml.dump(self.stats, f, indent=4)
 
+        # return
+        self.ran = True
         return self.stats

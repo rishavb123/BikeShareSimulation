@@ -21,14 +21,14 @@ def make_parser():
 
     parser.add_argument(
         "--num-riders",
-        "-r",
+        "-n",
         default=NUM_RIDERS,
         type=int,
         help="The number of riders that spawn in the time frame of the simulation.",
     )
     parser.add_argument(
         "--mean-spawn-rate",
-        "-s",
+        "-l",
         default=MEAN_SPAWN_RATE,
         type=float,
         help="The mean of the exponential distribution for the spawn rate of the riders (in riders/min).",
@@ -36,22 +36,22 @@ def make_parser():
 
     parser.add_argument(
         "--bikes-per-station",
-        "-b",
+        "-k",
         default=BIKES_PER_STATION,
-        type=int,
-        help="The number of bikes per station. Specify -1 for infinite bikes per station.",
+        type=lambda s: float(s) if s == 'inf' else int(s),
+        help="The number of bikes per station. Specify inf for infinite bikes per station.",
     )
 
     parser.add_argument(
         "--ride-time-mean",
-        "-rm",
+        "-mu",
         default=RIDE_TIME_MEAN,
         type=float,
         help="The log mean ride time, which is log normally distributed with the mean specified in this parameter.",
     )
     parser.add_argument(
         "--ride-time-std",
-        "-rs",
+        "-s",
         default=RIDE_TIME_STD,
         type=float,
         help="The log std ride time, which is log normally distributed with standard deviation specified in this parameter.",

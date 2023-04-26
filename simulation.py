@@ -1,3 +1,4 @@
+from collections import deque
 import csv
 import numpy as np
 
@@ -33,6 +34,9 @@ class Simulation:
 
         self.end_time = end_time
 
+        self.ran = False
+        self.stats = {}
+
     def load_start_probabilities(self, start_station_probs_file):
         stations = []
         p = []
@@ -44,13 +48,13 @@ class Simulation:
                 stations.append(name)
                 p.append(float(prob))
         return np.array(stations), np.array(p)
-    
+
     def build_stations_mapping(self, stations):
         mapping = {}
         for i in range(len(stations)):
             mapping[stations[i]] = i
         return mapping
-    
+
     def load_trip_stats(self, trip_stats_file):
         q = np.zeros((self.m, self.m))
         with open(trip_stats_file) as f:
@@ -65,8 +69,83 @@ class Simulation:
         q = q / q_sum
         return q
 
-
     def run(self):
-        print(self.p)
-        print(self.q)
-        print(self.stations)
+        if self.ran:
+            return
+
+        self.stats["invocations"] = {}
+        self.stats["total_riders"] = 0
+
+        bikes_stations = [self.k for _ in range(self.m)]
+        riders_waiting = [0 for _ in range(self.m)]
+
+        # define event system
+        events = [deque() for _ in range(self.end_time)]
+
+        def event_wrapper(f, **kwargs):
+            func_kwargs = {
+                key: kwargs[key] for key in kwargs if key in f.__code__.co_varnames
+            }
+
+            def wrapper():
+                self.stats["invocations"][f.__name__] = (
+                    self.stats["invocations"].get(f.__name__, 0) + 1
+                )
+                f(**func_kwargs)
+
+            return wrapper
+
+        def schedule(event, t, num_times=1, important=False, **kwargs):
+            if t >= self.end_time:
+                return
+            kwargs["t"] = t
+            argless_event = event_wrapper(event, **kwargs)
+            for _ in range(num_times):
+                if important:
+                    events[t].appendleft(argless_event)
+                else:
+                    events[t].append(argless_event)
+
+        # define events
+        def event__spawn_rider(t):
+            if self.stats["total_riders"] < self.n:
+                self.stats["total_riders"] += 1
+                i = np.random.choice(self.m, p=self.p)
+                riders_waiting[i] += 1
+                schedule(event__wait_for_bike, t, i=i)
+
+        def event__wait_for_bike(t, i):
+            if bikes_stations[i] > 0:
+                schedule(event__take_bike, t, important=True, i=i)
+            else:
+                schedule(event__wait_for_bike, t + 1, i=i)
+
+        def event__take_bike(t, i):
+            bikes_stations[i] -= 1
+            s = np.random.normal(loc=self.mu, scale=self.sigma)
+            ride_time = np.round(np.exp(s))
+            schedule(event__return_bike, t + int(ride_time), important=True, i=i)
+
+        def event__return_bike(i):
+            j = np.random.choice(self.m, p=self.q[i])
+            bikes_stations[j] += 1
+
+        # define simulation event caller
+        def run_events(t):
+            while len(events[t]) > 0:
+                events[t].popleft()()
+            events[t] = None
+
+        # schedule spawn events
+        num_spawn = np.round(
+            np.random.exponential(scale=self.lambda_, size=(self.end_time,))
+        )
+        [schedule(event__spawn_rider, t, int(num_spawn[t])) for t in range(self.end_time)]
+
+        # Run simulation loop
+        for t in range(self.end_time):
+            run_events(t)
+
+        self.ran = True
+
+        return self.stats

@@ -1,21 +1,42 @@
 {
     "invocations": {
         "event__spawn_rider": {
-            "total": 101,
-            "Spawned": 100,
-            "Limited": 1
+            "total": 127,
+            "ret_vals": {
+                "Spawned": 1,
+                "Limited": 126
+            },
+            "args": {}
         },
         "event__wait_for_bike": {
-            "total": 1777,
-            "Take": 61,
-            "Wait": 1716
+            "total": 1,
+            "ret_vals": {
+                "Take": 1
+            },
+            "args": {
+                "i": {
+                    "0": 1
+                }
+            }
         },
         "event__take_bike": {
-            "total": 61
+            "total": 1,
+            "ret_vals": {},
+            "args": {
+                "i": {
+                    "0": 1
+                }
+            }
         },
         "event__return_bike": {
-            "total": 57
+            "total": 1,
+            "ret_vals": {},
+            "args": {
+                "i": {
+                    "0": 1
+                }
+            }
         }
     },
-    "total_riders": 100
+    "total_riders": 1
 }

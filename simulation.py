@@ -96,13 +96,33 @@ class Simulation:
 
             def wrapper():
                 if f.__name__ not in self.stats["invocations"]:
-                    self.stats["invocations"][f.__name__] = {"total": 0}
+                    self.stats["invocations"][f.__name__] = {
+                        "total": 0,
+                        "ret_vals": {},
+                        "args": {},
+                    }
                 ret = f(**func_kwargs)
+
+                # Count invocations
                 self.stats["invocations"][f.__name__]["total"] += 1
+
+                # Count arg values
+                for k, v in func_kwargs.items():
+                    if k == "t":
+                        continue
+                    if k not in self.stats["invocations"][f.__name__]["args"]:
+                        self.stats["invocations"][f.__name__]["args"][k] = {}
+                    self.stats["invocations"][f.__name__]["args"][k][v] = (
+                        self.stats["invocations"][f.__name__]["args"][k].get(v, 0) + 1
+                    )
+
+                # Count return values
                 if ret is not None:
-                    ret = str(ret)
-                    self.stats["invocations"][f.__name__][ret] = (
-                        self.stats["invocations"][f.__name__].get(ret, 0) + 1
+                    self.stats["invocations"][f.__name__]["ret_vals"][ret] = (
+                        self.stats["invocations"][f.__name__]["ret_vals"].get(
+                            ret, 0
+                        )
+                        + 1
                     )
 
             return wrapper

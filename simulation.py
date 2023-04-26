@@ -100,10 +100,12 @@ class Simulation:
                 "total": 0,
                 "ret_vals": {},
                 "args": {},
+                "full_args": {},
                 "time_bins": {n: 0 for n in bin_names},
                 "overtime": {
                     "total": 0,
                     "args": {},
+                    "full_args": {}
                 }
             }
             return temp
@@ -116,16 +118,25 @@ class Simulation:
         events = [deque() for _ in range(self.end_time)]
 
         def count_invocation(invoc_dict, kwargs):
+            kwargs = {**kwargs}
+            del kwargs["t"]
+
             # Count invocations
             invoc_dict["total"] += 1
 
             # Count arg values
             for k, v in kwargs.items():
-                if k == "t":
-                    continue
                 if k not in invoc_dict["args"]:
                     invoc_dict["args"][k] = {}
                 invoc_dict["args"][k][v] = invoc_dict["args"][k].get(v, 0) + 1
+
+            # Count full arg values
+            string_kwargs = ""
+            for k, v in sorted(kwargs.items()):
+                string_kwargs += f", {k}={v}"
+            if len(string_kwargs) > 0:
+                string_kwargs = string_kwargs[2:]
+                invoc_dict["full_args"][string_kwargs] = invoc_dict["full_args"].get(string_kwargs, 0) + 1
 
         def event_wrapper(f, **kwargs):
             func_kwargs = {
@@ -176,7 +187,7 @@ class Simulation:
                 self.stats["total_riders"] += 1
                 i = np.random.choice(self.m, p=self.p)
                 riders_waiting[i] += 1
-                schedule(event__wait_for_bike, t, i=i)
+                schedule(event__wait_for_bike, t, i=i, arrived=True)
                 return i
             return "Limited"
 
@@ -265,6 +276,16 @@ class Simulation:
                 - self.stats["validation"][validation_check]["expected"][k]
                 for k in self.stats["validation"][validation_check]["expected"]
             }
+
+        # add reported values into stats
+        self.stats["report"] = {
+            "successful_rental_ratio": {
+                "estimate": self.stats["invocations"]["event__wait_for_bike"]["ret_vals"]["Take"] / self.stats["total_riders"]
+            },
+            "average_waiting_time": {
+                "estimate": 0
+            }
+        }
 
         # save stats
         if self.save_results is not None:

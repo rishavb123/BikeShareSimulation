@@ -26,7 +26,7 @@ def make_parser():
         "-s",
         default=MEAN_SPAWN_RATE,
         type=float,
-        help="The mean of the exponential distribution for the spawn rate of the riders.",
+        help="The mean of the exponential distribution for the spawn rate of the riders (in riders/min).",
     )
 
     parser.add_argument(

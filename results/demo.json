@@ -1,23 +1,19 @@
 {
     "invocations": {
         "event__spawn_rider": {
-            "success": 100,
-            "failure": 25,
-            "total": 125
+            "total": 101,
+            "Spawned": 100,
+            "Limited": 1
         },
         "event__wait_for_bike": {
-            "success": 57,
-            "failure": 2691,
-            "total": 2748
+            "total": 1777,
+            "Take": 61,
+            "Wait": 1716
         },
         "event__take_bike": {
-            "success": 57,
-            "failure": 0,
-            "total": 57
+            "total": 61
         },
         "event__return_bike": {
-            "success": 57,
-            "failure": 0,
             "total": 57
         }
     },

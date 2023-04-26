@@ -1,12 +1,12 @@
 {
-    "num_riders": 1000,
-    "mean_spawn_rate": 15,
-    "bikes_per_station": 5,
+    "num_riders": 10,
+    "mean_spawn_rate": 100,
+    "bikes_per_station": 1,
     "ride_time_mean": 2,
     "ride_time_std": 0.1,
     "start_station_probs_file": "./data/demo_start_station_probs.csv",
     "trip_stats_file": "./data/demo_trip_stats.csv",
     "end_time": 100,
     "num_time_bins": 10,
-    "save_results": "./results/demo.json"
+    "save_results": "./results/simple.json"
 }

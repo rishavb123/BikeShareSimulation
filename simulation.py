@@ -16,6 +16,7 @@ class Simulation:
         start_station_probs_file="./data/start_station_probs.csv",
         trip_stats_file="./data/trip_stats.csv",
         end_time=1440,
+        num_time_bins=24,
         save_results=None,
     ) -> None:
         self.n = num_riders
@@ -35,6 +36,7 @@ class Simulation:
         self.q = self.load_trip_stats(trip_stats_file=trip_stats_file)
 
         self.end_time = end_time
+        self.num_time_bins = num_time_bins
 
         self.save_results = save_results
 
@@ -80,6 +82,10 @@ class Simulation:
         if self.ran:
             return
 
+        # setup time bins
+        bin_width = self.end_time / self.num_time_bins
+        bin_names = [f"{b * bin_width:0.1f} -> {(b + 1) * bin_width:0.1f}" for b in range(self.num_time_bins)]
+
         # setup stats
         self.stats["stations_mapping"] = self.stations_mapping
         self.stats["start_probabilities"] = {i: self.p[i] for i in range(self.m)}
@@ -89,6 +95,19 @@ class Simulation:
         self.stats["total_riders"] = 0
         self.stats["invocations"] = {}
 
+        def make_count_template():
+            temp = {
+                "total": 0,
+                "ret_vals": {},
+                "args": {},
+                "time_bins": {n: 0 for n in bin_names},
+                "overtime": {
+                    "total": 0,
+                    "args": {},
+                }
+            }
+            return temp
+
         # create global variables
         bikes_stations = [self.k for _ in range(self.m)]
         riders_waiting = [0 for _ in range(self.m)]
@@ -96,7 +115,7 @@ class Simulation:
         # define event system
         events = [deque() for _ in range(self.end_time)]
 
-        def count_invocation_and_args(invoc_dict, kwargs):
+        def count_invocation(invoc_dict, kwargs):
             # Count invocations
             invoc_dict["total"] += 1
 
@@ -115,16 +134,11 @@ class Simulation:
 
             def wrapper():
                 if f.__name__ not in self.stats["invocations"]:
-                    self.stats["invocations"][f.__name__] = {
-                        "total": 0,
-                        "ret_vals": {},
-                        "args": {},
-                        "overtime": {"total": 0, "args": {}},
-                    }
+                    self.stats["invocations"][f.__name__] = make_count_template()
                 ret = f(**func_kwargs)
 
-                count_invocation_and_args(
-                    self.stats["invocations"][f.__name__], func_kwargs
+                count_invocation(
+                    self.stats["invocations"][f.__name__], kwargs
                 )
 
                 # Count return values
@@ -134,25 +148,19 @@ class Simulation:
                         + 1
                     )
 
+                # Count time values
+                self.stats["invocations"][f.__name__]["time_bins"][bin_names[int(t // bin_width)]] += 1
+
             return wrapper
 
         def schedule(event, t, num_times=1, important=False, **kwargs):
             kwargs["t"] = t
             if t >= self.end_time:
                 if event.__name__ not in self.stats["invocations"]:
-                    self.stats["invocations"][event.__name__] = {
-                        "total": 0,
-                        "ret_vals": {},
-                        "args": {},
-                        "overtime": {"total": 0, "args": {}},
-                    }
-                func_kwargs = {
-                    key: kwargs[key]
-                    for key in kwargs
-                    if key in event.__code__.co_varnames
-                }
-                count_invocation_and_args(
-                    self.stats["invocations"][event.__name__]["overtime"], func_kwargs
+                    self.stats["invocations"][event.__name__] = make_count_template()
+                count_invocation(
+                    self.stats["invocations"][event.__name__]["overtime"],
+                    kwargs,
                 )
                 return
             argless_event = event_wrapper(event, **kwargs)

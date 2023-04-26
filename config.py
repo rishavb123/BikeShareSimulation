@@ -12,6 +12,7 @@ START_STATION_PROBS_FILE = "./data/start_station_probs.csv"
 TRIP_STATS_FILE = "./data/trip_stats.csv"
 
 END_TIME = 1440
+NUM_TIME_BINS = 24
 
 SAVE_RESULTS = None
 
@@ -78,6 +79,13 @@ def make_parser():
         default=END_TIME,
         type=int,
         help="The end time of the simulation (starting from t=0) in minutes.",
+    )
+    parser.add_argument(
+        "--num-time-bins",
+        "-b",
+        default=NUM_TIME_BINS,
+        type=int,
+        help="The number of time bins to include in the results."
     )
 
     parser.add_argument(

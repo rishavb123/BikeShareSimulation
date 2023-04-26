@@ -96,16 +96,14 @@ class Simulation:
 
             def wrapper():
                 if f.__name__ not in self.stats["invocations"]:
-                    self.stats["invocations"][f.__name__] = {
-                        "success": 0,
-                        "failure": 0,
-                        "total": 0
-                    }
+                    self.stats["invocations"][f.__name__] = {"total": 0}
+                ret = f(**func_kwargs)
                 self.stats["invocations"][f.__name__]["total"] += 1
-                if f(**func_kwargs):
-                    self.stats["invocations"][f.__name__]["success"] += 1
-                else:
-                    self.stats["invocations"][f.__name__]["failure"] += 1
+                if ret is not None:
+                    ret = str(ret)
+                    self.stats["invocations"][f.__name__][ret] = (
+                        self.stats["invocations"][f.__name__].get(ret, 0) + 1
+                    )
 
             return wrapper
 
@@ -127,16 +125,16 @@ class Simulation:
                 i = np.random.choice(self.m, p=self.p)
                 riders_waiting[i] += 1
                 schedule(event__wait_for_bike, t, i=i)
-                return True
-            return False
+                return "Spawned"
+            return "Limited"
 
         def event__wait_for_bike(t, i):
             if bikes_stations[i] > 0:
                 schedule(event__take_bike, t, important=True, i=i)
-                return True
+                return "Take"
             else:
                 schedule(event__wait_for_bike, t + 1, i=i)
-                return False
+                return "Wait"
 
         def event__take_bike(t, i):
             if bikes_stations[i] <= 0:
@@ -151,7 +149,6 @@ class Simulation:
         def event__return_bike(i):
             j = np.random.choice(self.m, p=self.q[i])
             bikes_stations[j] += 1
-            return True
 
         # define simulation event caller
         def run_events(t):
@@ -163,7 +160,10 @@ class Simulation:
         num_spawn = np.round(
             np.random.exponential(scale=self.lambda_, size=(self.end_time,))
         )
-        [schedule(event__spawn_rider, t, int(num_spawn[t])) for t in range(self.end_time)]
+        [
+            schedule(event__spawn_rider, t, int(num_spawn[t]))
+            for t in range(self.end_time)
+        ]
 
         # Run simulation loop
         for t in range(self.end_time):

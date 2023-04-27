@@ -8,7 +8,7 @@ from config import make_parser
 from args_utils import get_args
 from simulation import Simulation
 
-N_RUNS = 10
+N_RUNS = 100
 CONFIDENCE = 0.9
 
 

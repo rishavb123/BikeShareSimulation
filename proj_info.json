@@ -1,0 +1,10 @@
+{
+  "imageUrl": "https://raw.githubusercontent.com/rishavb123/BikeShareSimulation/main/screenshot.png",
+  "links": [
+    {
+      "name": "Report",
+      "url": "https://github.com/rishavb123/BikeShareSimulation/blob/main/pdf/report.pdf"
+    }
+  ],
+  "priority": 5
+}
